@@ -1,0 +1,136 @@
+import tkinter as tk
+from tkinter import messagebox, simpledialog
+
+accounts = {}
+
+def create_account_window():
+    win = tk.Toplevel(root)
+    win.title("Create Account")
+
+    tk.Label(win, text="Account Number:").grid(row=0, column=0)
+    acc_entry = tk.Entry(win)
+    acc_entry.grid(row=0, column=1)
+
+    tk.Label(win, text="Name:").grid(row=1, column=0)
+    name_entry = tk.Entry(win)
+    name_entry.grid(row=1, column=1)
+
+    tk.Label(win, text="4-digit PIN:").grid(row=2, column=0)
+    pin_entry = tk.Entry(win, show="*")
+    pin_entry.grid(row=2, column=1)
+
+    tk.Label(win, text="Opening Balance:").grid(row=3, column=0)
+    bal_entry = tk.Entry(win)
+    bal_entry.grid(row=3, column=1)
+
+    def submit():
+        acc_no = acc_entry.get()
+        if acc_no in accounts:
+            messagebox.showerror("Error", "Account already exists!")
+            return
+        name = name_entry.get()
+        pin = pin_entry.get()
+        try:
+            balance = float(bal_entry.get())
+        except ValueError:
+            messagebox.showerror("Error", "Invalid balance amount")
+            return
+        accounts[acc_no] = [name, pin, balance]
+        messagebox.showinfo("Success", "Account created successfully!")
+        win.destroy()
+
+    tk.Button(win, text="Create", command=submit).grid(row=4, columnspan=2)
+
+def login_window():
+    win = tk.Toplevel(root)
+    win.title("Login")
+
+    tk.Label(win, text="Account Number:").grid(row=0, column=0)
+    acc_entry = tk.Entry(win)
+    acc_entry.grid(row=0, column=1)
+
+    tk.Label(win, text="PIN:").grid(row=1, column=0)
+    pin_entry = tk.Entry(win, show="*")
+    pin_entry.grid(row=1, column=1)
+
+    def submit():
+        acc_no = acc_entry.get()
+        pin = pin_entry.get()
+        if acc_no in accounts and accounts[acc_no][1] == pin:
+            messagebox.showinfo("Login Success", f"Welcome {accounts[acc_no][0]}!")
+            win.destroy()
+            atm_menu(acc_no)
+        else:
+            messagebox.showerror("Error", "Invalid account number or PIN")
+
+    tk.Button(win, text="Login", command=submit).grid(row=2, columnspan=2)
+
+
+def check_balance(acc_no):
+    messagebox.showinfo("Balance", f"Your balance is: {accounts[acc_no][2]}")
+
+def deposit(acc_no):
+    amt = simpledialog.askfloat("Deposit", "Enter amount to deposit:")
+    if amt and amt > 0:
+        accounts[acc_no][2] += amt
+        messagebox.showinfo("Success", "Deposit successful.")
+    else:
+        messagebox.showerror("Error", "Invalid amount.")
+
+def withdraw(acc_no):
+    amt = simpledialog.askfloat("Withdraw", "Enter amount to withdraw:")
+    if amt and amt > 0:
+        if amt <= accounts[acc_no][2]:
+            accounts[acc_no][2] -= amt
+            messagebox.showinfo("Success", "Withdrawal successful.")
+        else:
+            messagebox.showerror("Error", "Insufficient balance.")
+    else:
+        messagebox.showerror("Error", "Invalid amount.")
+
+def transfer(acc_no):
+    to_acc = simpledialog.askstring("Transfer", "Enter destination account number:")
+    if to_acc not in accounts:
+        messagebox.showerror("Error", "Destination account not found.")
+        return
+    amt = simpledialog.askfloat("Transfer", "Enter amount to transfer:")
+    if amt and amt > 0:
+        if amt <= accounts[acc_no][2]:
+            accounts[acc_no][2] -= amt
+            accounts[to_acc][2] += amt
+            messagebox.showinfo("Success", f"Transferred {amt} to {accounts[to_acc][0]} ({to_acc}).")
+        else:
+            messagebox.showerror("Error", "Insufficient balance.")
+    else:
+        messagebox.showerror("Error", "Invalid amount.")
+
+def change_pin(acc_no):
+    old_pin = simpledialog.askstring("Change PIN", "Enter old PIN:", show="*")
+    if old_pin == accounts[acc_no][1]:
+        new_pin = simpledialog.askstring("Change PIN", "Enter new 4-digit PIN:", show="*")
+        accounts[acc_no][1] = new_pin
+        messagebox.showinfo("Success", "PIN changed successfully.")
+    else:
+        messagebox.showerror("Error", "Incorrect old PIN.")
+
+def atm_menu(acc_no):
+    win = tk.Toplevel(root)
+    win.title("ATM Menu")
+
+    tk.Button(win, text="Check Balance", command=lambda: check_balance(acc_no)).pack(pady=5)
+    tk.Button(win, text="Deposit Money", command=lambda: deposit(acc_no)).pack(pady=5)
+    tk.Button(win, text="Withdraw Money", command=lambda: withdraw(acc_no)).pack(pady=5)
+    tk.Button(win, text="Transfer Money", command=lambda: transfer(acc_no)).pack(pady=5)
+    tk.Button(win, text="Change PIN", command=lambda: change_pin(acc_no)).pack(pady=5)
+    tk.Button(win, text="Logout", command=win.destroy).pack(pady=5)
+
+root = tk.Tk()
+root.geometry("900x900")
+root.title("ATM System")
+
+tk.Label(root, text="===== ATM Menu =====", font=("Arial", 14)).pack(pady=10)
+tk.Button(root, text="Create Account", width=20, command=create_account_window).pack(pady=5)
+tk.Button(root, text="Login", width=20, command=login_window).pack(pady=5)
+tk.Button(root, text="Exit", width=20, command=root.quit).pack(pady=5)
+
+root.mainloop()
