@@ -1,0 +1,104 @@
+from tkinter import *
+from tkinter import messagebox, simpledialog
+
+users = {"Tejaswini": "5090"}  
+products = {}              
+sales = []                 
+
+
+def login():
+    username = entry_user.get()
+    password = entry_pass.get()
+
+    if username in users and users[username] == password:
+        messagebox.showinfo("Login", "Login successful!")
+        login_win.destroy()
+        open_dashboard()
+    else:
+        messagebox.showerror("Error", "Invalid username or password")
+
+
+def add_product():
+    pid = simpledialog.askstring("Add Product", "Enter Product ID:")
+    if not pid or pid in products:
+        messagebox.showwarning("Warning", "Invalid or duplicate Product ID.")
+        return
+
+    name = simpledialog.askstring("Add Product", "Enter Product Name:")
+    qty = simpledialog.askinteger("Add Product", "Enter Quantity:")
+    price = simpledialog.askfloat("Add Product", "Enter Price:")
+
+    products[pid] = {"name": name, "qty": qty, "price": price}
+    messagebox.showinfo("Added", "Product added successfully!")
+
+def view_products():
+    if not products:
+        messagebox.showinfo("Inventory", "No products available.")
+        return
+
+    text = "ID | Name | Qty | Price\n" + "-"*30 + "\n"
+    for pid, p in products.items():
+        text += f"{pid} | {p['name']} | {p['qty']} | ₹{p['price']}\n"
+
+    messagebox.showinfo("Inventory", text)
+
+def sell_product():
+    pid = simpledialog.askstring("Sell Product", "Enter Product ID:")
+    if pid not in products:
+        messagebox.showerror("Error", "Product not found.")
+        return
+
+    qty = simpledialog.askinteger("Sell Product", "Enter Quantity:")
+    if qty > products[pid]["qty"]:
+        messagebox.showerror("Error", "Not enough stock.")
+        return
+
+    products[pid]["qty"] -= qty
+    amount = qty * products[pid]["price"]
+    sales.append({"name": products[pid]["name"], "qty": qty, "amount": amount})
+
+    messagebox.showinfo("Sold", f"Sold {qty} units for ₹{amount}")
+
+def show_sales():
+    if not sales:
+        messagebox.showinfo("Sales", "No sales yet.")
+        return
+
+    text = "Sales Summary:\n\n"
+    total = 0
+    for s in sales:
+        text += f"{s['name']} x{s['qty']} = ₹{s['amount']}\n"
+        total += s['amount']
+
+    text += f"\nTotal Sales: ₹{total}"
+    messagebox.showinfo("Sales", text)
+
+
+def open_dashboard():
+    dash = Tk()
+    dash.title("Inventory Dashboard")
+    dash.geometry("300x300")
+
+    Button(dash, text="Add Product", command=add_product, width=25).pack(pady=5)
+    Button(dash, text="View Products", command=view_products, width=25).pack(pady=5)
+    Button(dash, text="Sell Product", command=sell_product, width=25).pack(pady=5)
+    Button(dash, text="Sales Summary", command=show_sales, width=25).pack(pady=5)
+
+    dash.mainloop()
+
+
+login_win = Tk()
+login_win.title("Login")
+login_win.geometry("250x150")
+
+Label(login_win, text="Username").pack()
+entry_user = Entry(login_win)
+entry_user.pack()
+
+Label(login_win, text="Password").pack()
+entry_pass = Entry(login_win, show="*")
+entry_pass.pack()
+
+Button(login_win, text="Login", command=login).pack(pady=10)
+
+login_win.mainloop()
